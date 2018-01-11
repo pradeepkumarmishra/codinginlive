@@ -10,36 +10,43 @@ public class DeadlockExample {
 
 	public static void main(String[] args) {
 		
-		DeadlockExample.SharedResource sharedResource=new DeadlockExample().new SharedResource();
-		
-		Thread t=new Thread(new Runnable(){
+		final SharedResource sharedResource=new SharedResource();
+		final SharedResource sharedResource2=new SharedResource();
+		new Thread(new Runnable(){
 			@Override
 			public void run() {
-				System.out.println("setting reource name from child thread");
-				
-			//Child thread acquires lock on sharedResource object and wait for release on lock  held by main thread
-				sharedResource.setResourceName("Mishra");				
+				try {
+					Thread.sleep(2000);
+				} catch (InterruptedException e) {
+				}
+				sharedResource.setResourceName(sharedResource2);				
 			}
 			
-		});
-		t.start();
+		}).start();
 		
-		//Main thread acquires lock on sharedResource object and wait for release lock held by child thread
-			sharedResource.setResourceName2("P");
+		
+		new Thread(new Runnable(){
+			@Override
+			public void run() {
+				try {
+					Thread.sleep(2000);
+				} catch (InterruptedException e) {
+				}
+				sharedResource2.setResourceName(sharedResource);			
+			}
+			
+		}).start();
 		
 	}
 	
 	
-	class SharedResource{
-		private String resourceName;
+	static class SharedResource{
 		
-		public synchronized void setResourceName(String resourceName){
-			this.resourceName=resourceName;
-			setResourceName2("rersource2");
+		public synchronized void setResourceName(SharedResource sr){
+			System.out.println(""+sr.toString());
+			sr.setResourceName2(this);
 		}
-		public synchronized void setResourceName2(String resourceName){
-			this.resourceName=resourceName;
-			setResourceName("rersource1");
+		public synchronized void setResourceName2(SharedResource sr){
 		}
 		
 	}
